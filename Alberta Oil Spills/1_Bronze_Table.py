@@ -3,6 +3,8 @@
 # MAGIC # Alberta Oil Spills
 # MAGIC
 # MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
+# MAGIC
+# MAGIC We will be building a predictor of morbidity rate (injury or death)
 
 # COMMAND ----------
 
