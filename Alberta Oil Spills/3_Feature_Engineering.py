@@ -51,7 +51,7 @@ drop_cols = [
     "location",
     "incident_complete_date",
     "release_cleanup_date",
-    "licence_number"
+    "licence_number",
 ]
 
 truncated_df = cleaned_df.drop(*drop_cols)
@@ -97,8 +97,8 @@ def compute_morbidity_features(data):
     # Convert to a dataframe compatible with the pandas API
     data = data.pandas_api()
     data = truncated_df.toPandas()
-    
-    #Encode all classifier features
+
+    # Encode all classifier features
     return data.apply(LabelEncoder().fit_transform)
 
 # COMMAND ----------
@@ -108,26 +108,28 @@ from databricks.feature_store import FeatureStoreClient
 
 fs = FeatureStoreClient()
 morbidity_features_df = compute_morbidity_features(truncated_df)
-morbidity_df = spark.createDataFrame(morbidity_features_df) 
+morbidity_df = spark.createDataFrame(morbidity_features_df)
 
 try:
-  #drop table if exists
-  fs.drop_table(f'hive_metastore.{dbName}.dbdemos_mlops_morbidity_features')
+    # drop table if exists
+    fs.drop_table(f"hive_metastore.{dbName}.dbdemos_mlops_morbidity_features")
 except:
-  pass
-#Note: You might need to delete the FS table using the UI
+    pass
+# Note: You might need to delete the FS table using the UI
 churn_feature_table = fs.create_table(
-  name=f'hive_metastore.{dbName}.morbidity_features',
-  primary_keys='incident_number',
-  schema=morbidity_df.schema,
-  description='These features are derived from the cleaned_oil_spills table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.'
+    name=f"hive_metastore.{dbName}.morbidity_features",
+    primary_keys="incident_number",
+    schema=morbidity_df.schema,
+    description="These features are derived from the cleaned_oil_spills table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.",
 )
 
-fs.write_table(df=morbidity_df, name=f'{dbName}.morbidity_features', mode='overwrite')
+fs.write_table(df=morbidity_df, name=f"{dbName}.morbidity_features", mode="overwrite")
 
 # COMMAND ----------
 
-truncated_df.write.format('delta').option("mergeSchema", "true").mode('overwrite').saveAsTable(f"hive_metastore.ab_oil_spills_{initials}.trunctated_oil_spills")
+truncated_df.write.format("delta").option("mergeSchema", "true").mode(
+    "overwrite"
+).saveAsTable(f"hive_metastore.ab_oil_spills_{initials}.trunctated_oil_spills")
 
 # COMMAND ----------
 

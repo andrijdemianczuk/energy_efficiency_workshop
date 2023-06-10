@@ -22,17 +22,23 @@ initials = "ad"
 
 import urllib
 
-urllib.request.urlretrieve("https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv", "/tmp/ab_oil_spills.csv")
+urllib.request.urlretrieve(
+    "https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv", "/tmp/ab_oil_spills.csv"
+)
 dbutils.fs.mv("file:/tmp/ab_oil_spills.csv", "dbfs:/tmp/ab_oil_spills.csv")
 
 # COMMAND ----------
 
 # DBTITLE 1,Read our source data from the internet and create a dataframe
-
-df = spark.read.format("csv").option("header", True).option("inferSchema", True).load("dbfs:/tmp/ab_oil_spills.csv")
-df = (df
-      .withColumnRenamed(existing="Pipeline Outside Diameter (mm)", new="Pipeline Outside Diameter")
-      .withColumnRenamed(existing="Pipe Wall Thickness (mm)", new="Pipe Wall Thickness"))
+df = (
+    spark.read.format("csv")
+    .option("header", True)
+    .option("inferSchema", True)
+    .load("dbfs:/tmp/ab_oil_spills.csv")
+)
+df = df.withColumnRenamed(
+    existing="Pipeline Outside Diameter (mm)", new="Pipeline Outside Diameter"
+).withColumnRenamed(existing="Pipe Wall Thickness (mm)", new="Pipe Wall Thickness")
 display(df)
 
 # COMMAND ----------
@@ -59,7 +65,7 @@ def fix_header(df: DataFrame) -> list:
 
 # DBTITLE 1,Fix the column names
 # Create a new dataframe with fixed column names
-fixed_headers = fix_header(df = df)
+fixed_headers = fix_header(df=df)
 print(fixed_headers)
 
 # Apply to create the new dataframe
@@ -70,7 +76,9 @@ fixed_df.show()
 # COMMAND ----------
 
 # DBTITLE 1,Write the fixed dataframe to delta
-fixed_df.write.format('delta').option("mergeSchema", "true").mode('overwrite').saveAsTable(f"hive_metastore.ab_oil_spills_{initials}.raw_oil_spills")
+fixed_df.write.format("delta").option("mergeSchema", "true").mode(
+    "overwrite"
+).saveAsTable(f"hive_metastore.ab_oil_spills_{initials}.raw_oil_spills")
 
 # COMMAND ----------
 

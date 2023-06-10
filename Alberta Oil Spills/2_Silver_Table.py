@@ -18,9 +18,6 @@ from pyspark.sql.functions import col
 # COMMAND ----------
 
 initials = "ad"
-
-# COMMAND ----------
-
 df = spark.table(f"hive_metastore.ab_oil_spills_{initials}.raw_oil_spills")
 
 # COMMAND ----------
@@ -42,45 +39,45 @@ print("Our morbidity rate is: " + str(round(morbidity / df.count() * 100, 4)) + 
 # COMMAND ----------
 
 # DBTITLE 1,Create a list of columns with reasonable non-null counts
-columns = ["incident_meridian",
-"incident_range",
-"incident_township",
-"incident_section",
-"incident_number",
-"incident_lsd",
-"volume_released",
-"volume_recovered",
-"injury_count",
-"fatality_count",
-"licensee_name",
-"field_centre",
-"incident_notification_date",
-"incident_type",
-"incident_date",
-"geometry_point",
-"location_1",
-"location",
-"source",
-"failure_type",
-"cause_type",
-"cause_category",
-"licensee_id",
-"area_affected",
-"wildlife_livestock_affected",
-"public_affected",
-"sensitive_area",
-"release_offsite",
-"incident_complete_date",
-"strike_area",
-"substance_released",
-"volume_units",
-"release_cleanup_date",
-"environment_affected",
-"jurisdiction",
-"licence_type",
-"licence_number"]
-
-# COMMAND ----------
+columns = [
+    "incident_meridian",
+    "incident_range",
+    "incident_township",
+    "incident_section",
+    "incident_number",
+    "incident_lsd",
+    "volume_released",
+    "volume_recovered",
+    "injury_count",
+    "fatality_count",
+    "licensee_name",
+    "field_centre",
+    "incident_notification_date",
+    "incident_type",
+    "incident_date",
+    "geometry_point",
+    "location_1",
+    "location",
+    "source",
+    "failure_type",
+    "cause_type",
+    "cause_category",
+    "licensee_id",
+    "area_affected",
+    "wildlife_livestock_affected",
+    "public_affected",
+    "sensitive_area",
+    "release_offsite",
+    "incident_complete_date",
+    "strike_area",
+    "substance_released",
+    "volume_units",
+    "release_cleanup_date",
+    "environment_affected",
+    "jurisdiction",
+    "licence_type",
+    "licence_number",
+]
 
 reduced_df = df.select(*columns)
 display(reduced_df.head(5))
