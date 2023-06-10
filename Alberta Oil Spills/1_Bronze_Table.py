@@ -20,11 +20,16 @@ initials = "ad"
 
 # COMMAND ----------
 
-# DBTITLE 1,Read our source data from the internet and create a dataframe
 import urllib
 
 urllib.request.urlretrieve("https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv", "/tmp/ab_oil_spills.csv")
-df = spark.read.format("csv").option("header", True).option("inferSchema", True).load("file:/tmp/ab_oil_spills.csv")
+dbutils.fs.mv("file:/tmp/ab_oil_spills.csv", "dbfs:/tmp/ab_oil_spills.csv")
+
+# COMMAND ----------
+
+# DBTITLE 1,Read our source data from the internet and create a dataframe
+
+df = spark.read.format("csv").option("header", True).option("inferSchema", True).load("dbfs:/tmp/ab_oil_spills.csv")
 df = (df
       .withColumnRenamed(existing="Pipeline Outside Diameter (mm)", new="Pipeline Outside Diameter")
       .withColumnRenamed(existing="Pipe Wall Thickness (mm)", new="Pipe Wall Thickness"))
