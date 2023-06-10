@@ -401,175 +401,241 @@ def get_automl_churn_run(
 
 # COMMAND ----------
 
-#Helper to get the MLOps Databricks job or create it if it doesn't exists
-def find_job(name, offset = 0, limit = 25):
-    r = http_request(host_creds=host_creds, endpoint="/api/2.1/jobs/list", method="GET", params={"limit": limit, "offset": offset, "name": urllib.parse.quote_plus(name)}).json()
-    if 'jobs' in r:
-        for job in r['jobs']:
+# DBTITLE 1,Define the Job Helper Functions (Boilerplate)
+# Helper to get the MLOps Databricks job or create it if it doesn't exists
+def find_job(name, offset=0, limit=25):
+    r = http_request(
+        host_creds=host_creds,
+        endpoint="/api/2.1/jobs/list",
+        method="GET",
+        params={
+            "limit": limit,
+            "offset": offset,
+            "name": urllib.parse.quote_plus(name),
+        },
+    ).json()
+    if "jobs" in r:
+        for job in r["jobs"]:
             if job["settings"]["name"] == name:
                 return job
-        if r['has_more']:
-            return find_job(name, offset+limit, limit)
+        if r["has_more"]:
+            return find_job(name, offset + limit, limit)
     return None
 
+
 def get_churn_staging_job_id():
-  job = find_job("demos_churn_model_staging_validation")
-  if job is not None:
-    return job['job_id']
-  else:
-    #the job doesn't exist, we dynamically create it.
-    #Note: requires DBR 10 ML to use automl model
-    notebook_path = dbutils.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-    base_path = '/'.join(notebook_path.split('/')[:-1])
-    cloud_name = get_cloud_name()
-    if cloud_name == "aws":
-      node_type = "i3.xlarge"
-    elif cloud_name == "azure":
-      node_type = "Standard_DS3_v2"
-    elif cloud_name == "gcp":
-      node_type = "n1-standard-4"
+    job = find_job("demos_churn_model_staging_validation")
+    if job is not None:
+        return job["job_id"]
     else:
-      raise Exception(f"Cloud '{cloud_name}' isn't supported!")
-    job_settings = {
-                  "email_notifications": {},
-                  "name": "demos_churn_model_staging_validation",
-                  "max_concurrent_runs": 1,
-                  "tasks": [
-                      {
-                          "new_cluster": {
-                              "spark_version": "12.2.x-cpu-ml-scala2.12",
-                              "spark_conf": {
-                                  "spark.databricks.cluster.profile": "singleNode",
-                                  "spark.master": "local[*, 4]"
-                              },
-                              "num_workers": 0,
-                              "node_type_id": node_type,
-                              "driver_node_type_id": node_type,
-                              "custom_tags": {
-                                  "ResourceClass": "SingleNode"
-                              },
-                              "spark_env_vars": {
-                                  "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-                              },
-                              "enable_elastic_disk": True
-                          },
-                          "notebook_task": {
-                              "notebook_path": f"{base_path}/05_job_staging_validation"
-                          },
-                          "email_notifications": {},
-                          "task_key": "test-model"
-                      }
-                  ]
-          }
-    print("Job doesn't exists, creating it...")
-    r = http_request(host_creds=host_creds, endpoint="/api/2.1/jobs/create", method="POST", json=job_settings).json()
-    return r['job_id']
+        # the job doesn't exist, we dynamically create it.
+        # Note: requires DBR 10 ML to use automl model
+        notebook_path = (
+            dbutils.entry_point.getDbutils()
+            .notebook()
+            .getContext()
+            .notebookPath()
+            .get()
+        )
+        base_path = "/".join(notebook_path.split("/")[:-1])
+        cloud_name = get_cloud_name()
+        if cloud_name == "aws":
+            node_type = "i3.xlarge"
+        elif cloud_name == "azure":
+            node_type = "Standard_DS3_v2"
+        elif cloud_name == "gcp":
+            node_type = "n1-standard-4"
+        else:
+            raise Exception(f"Cloud '{cloud_name}' isn't supported!")
+        job_settings = {
+            "email_notifications": {},
+            "name": "demos_churn_model_staging_validation",
+            "max_concurrent_runs": 1,
+            "tasks": [
+                {
+                    "new_cluster": {
+                        "spark_version": "12.2.x-cpu-ml-scala2.12",
+                        "spark_conf": {
+                            "spark.databricks.cluster.profile": "singleNode",
+                            "spark.master": "local[*, 4]",
+                        },
+                        "num_workers": 0,
+                        "node_type_id": node_type,
+                        "driver_node_type_id": node_type,
+                        "custom_tags": {"ResourceClass": "SingleNode"},
+                        "spark_env_vars": {
+                            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+                        },
+                        "enable_elastic_disk": True,
+                    },
+                    "notebook_task": {
+                        "notebook_path": f"{base_path}/05_job_staging_validation"
+                    },
+                    "email_notifications": {},
+                    "task_key": "test-model",
+                }
+            ],
+        }
+        print("Job doesn't exists, creating it...")
+        r = http_request(
+            host_creds=host_creds,
+            endpoint="/api/2.1/jobs/create",
+            method="POST",
+            json=job_settings,
+        ).json()
+        return r["job_id"]
 
 # COMMAND ----------
 
+# DBTITLE 1,Define the Job Hooks to Support Experiment Management (Boilerplate)
 # Manage webhooks
 try:
-  from databricks_registry_webhooks import RegistryWebhooksClient, JobSpec, HttpUrlSpec
-  def create_job_webhook(model_name, job_id):
-    return RegistryWebhooksClient().create_webhook(
-      model_name = model_name,
-      events = ["TRANSITION_REQUEST_CREATED"],
-      job_spec = JobSpec(job_id=job_id, access_token=token),
-      description = "Trigger the ops_validation job when a model is requested to move to staging.",
-      status = "ACTIVE")
+    from databricks_registry_webhooks import (
+        RegistryWebhooksClient,
+        JobSpec,
+        HttpUrlSpec,
+    )
 
-  def create_notification_webhook(model_name, slack_url):
-    from databricks_registry_webhooks import RegistryWebhooksClient, JobSpec, HttpUrlSpec
-    return RegistryWebhooksClient().create_webhook(
-      model_name = model_name,
-      events = ["TRANSITION_REQUEST_CREATED"],
-      description = "Notify the MLOps team that a model is requested to move to staging.",
-      status = "ACTIVE",
-      http_url_spec = HttpUrlSpec(url=slack_url))
+    def create_job_webhook(model_name, job_id):
+        return RegistryWebhooksClient().create_webhook(
+            model_name=model_name,
+            events=["TRANSITION_REQUEST_CREATED"],
+            job_spec=JobSpec(job_id=job_id, access_token=token),
+            description="Trigger the ops_validation job when a model is requested to move to staging.",
+            status="ACTIVE",
+        )
 
-  # List
-  def list_webhooks(model_name):
-    from databricks_registry_webhooks import RegistryWebhooksClient
-    return RegistryWebhooksClient().list_webhooks(model_name = model_name)
+    def create_notification_webhook(model_name, slack_url):
+        from databricks_registry_webhooks import (
+            RegistryWebhooksClient,
+            JobSpec,
+            HttpUrlSpec,
+        )
 
-  # Delete
-  def delete_webhooks(webhook_id):
-    from databricks_registry_webhooks import RegistryWebhooksClient
-    return RegistryWebhooksClient().delete_webhook(id=webhook_id)
+        return RegistryWebhooksClient().create_webhook(
+            model_name=model_name,
+            events=["TRANSITION_REQUEST_CREATED"],
+            description="Notify the MLOps team that a model is requested to move to staging.",
+            status="ACTIVE",
+            http_url_spec=HttpUrlSpec(url=slack_url),
+        )
+
+    # List
+    def list_webhooks(model_name):
+        from databricks_registry_webhooks import RegistryWebhooksClient
+
+        return RegistryWebhooksClient().list_webhooks(model_name=model_name)
+
+    # Delete
+    def delete_webhooks(webhook_id):
+        from databricks_registry_webhooks import RegistryWebhooksClient
+
+        return RegistryWebhooksClient().delete_webhook(id=webhook_id)
 
 except:
-  def raise_exception():
-    print("You need to install databricks-registry-webhooks library to easily perform this operation (you could also use the rest API directly).")
-    print("Please run: %pip install databricks-registry-webhooks ")
-    raise RuntimeError("function not available without databricks-registry-webhooks.")
 
-  def create_job_webhook(model_name, job_id):
-    raise_exception()
-  def create_notification_webhook(model_name, slack_url):
-    raise_exception()
-  def list_webhooks(model_name):
-    raise_exception()
-  def delete_webhooks(webhook_id):
-    raise_exception()
-    
+    def raise_exception():
+        print(
+            "You need to install databricks-registry-webhooks library to easily perform this operation (you could also use the rest API directly)."
+        )
+        print("Please run: %pip install databricks-registry-webhooks ")
+        raise RuntimeError(
+            "function not available without databricks-registry-webhooks."
+        )
+
+    def create_job_webhook(model_name, job_id):
+        raise_exception()
+
+    def create_notification_webhook(model_name, slack_url):
+        raise_exception()
+
+    def list_webhooks(model_name):
+        raise_exception()
+
+    def delete_webhooks(webhook_id):
+        raise_exception()
+
+
 def reset_webhooks(model_name):
-  whs = list_webhooks(model_name)
-  for wh in whs:
-    delete_webhooks(wh.id)
+    whs = list_webhooks(model_name)
+    for wh in whs:
+        delete_webhooks(wh.id)
 
 # COMMAND ----------
 
+# DBTITLE 1,MLOps Helpers (Boilerplate)
 client = mlflow.tracking.client.MlflowClient()
 
 host_creds = client._tracking_client.store.get_host_creds()
 host = host_creds.host
 token = host_creds.token
 
-def mlflow_call_endpoint(endpoint, method, body='{}'):
-  if method == 'GET':
-      response = http_request(
-          host_creds=host_creds, endpoint="/api/2.0/mlflow/{}".format(endpoint), method=method, params=json.loads(body))
-  else:
-      response = http_request(
-          host_creds=host_creds, endpoint="/api/2.0/mlflow/{}".format(endpoint), method=method, json=json.loads(body))
-  return response.json()
+
+def mlflow_call_endpoint(endpoint, method, body="{}"):
+    if method == "GET":
+        response = http_request(
+            host_creds=host_creds,
+            endpoint="/api/2.0/mlflow/{}".format(endpoint),
+            method=method,
+            params=json.loads(body),
+        )
+    else:
+        response = http_request(
+            host_creds=host_creds,
+            endpoint="/api/2.0/mlflow/{}".format(endpoint),
+            method=method,
+            json=json.loads(body),
+        )
+    return response.json()
 
 
 # Request transition to staging
 def request_transition(model_name, version, stage):
-  
-  staging_request = {'name': model_name,
-                     'version': version,
-                     'stage': stage,
-                     'archive_existing_versions': 'true'}
-  response = mlflow_call_endpoint('transition-requests/create', 'POST', json.dumps(staging_request))
-  return(response)
-  
-  
+
+    staging_request = {
+        "name": model_name,
+        "version": version,
+        "stage": stage,
+        "archive_existing_versions": "true",
+    }
+    response = mlflow_call_endpoint(
+        "transition-requests/create", "POST", json.dumps(staging_request)
+    )
+    return response
+
+
 # Comment on model
 def model_comment(model_name, version, comment):
-  
-  comment_body = {'name': model_name,
-                  'version': version, 
-                  'comment': comment}
-  response = mlflow_call_endpoint('comments/create', 'POST', json.dumps(comment_body))
-  return(response)
+
+    comment_body = {"name": model_name, "version": version, "comment": comment}
+    response = mlflow_call_endpoint("comments/create", "POST", json.dumps(comment_body))
+    return response
+
 
 # Accept or reject transition request
 def accept_transition(model_name, version, stage, comment):
-  approve_request_body = {'name': model_details.name,
-                          'version': model_details.version,
-                          'stage': stage,
-                          'archive_existing_versions': 'true',
-                          'comment': comment}
-  
-  mlflow_call_endpoint('transition-requests/approve', 'POST', json.dumps(approve_request_body))
+    approve_request_body = {
+        "name": model_details.name,
+        "version": model_details.version,
+        "stage": stage,
+        "archive_existing_versions": "true",
+        "comment": comment,
+    }
+
+    mlflow_call_endpoint(
+        "transition-requests/approve", "POST", json.dumps(approve_request_body)
+    )
+
 
 def reject_transition(model_name, version, stage, comment):
-  
-  reject_request_body = {'name': model_details.name, 
-                         'version': model_details.version, 
-                         'stage': stage, 
-                         'comment': comment}
-  
-  mlflow_call_endpoint('transition-requests/reject', 'POST', json.dumps(reject_request_body))
+
+    reject_request_body = {
+        "name": model_details.name,
+        "version": model_details.version,
+        "stage": stage,
+        "comment": comment,
+    }
+
+    mlflow_call_endpoint(
+        "transition-requests/reject", "POST", json.dumps(reject_request_body)
+    )
