@@ -643,3 +643,19 @@ def reject_transition(model_name, version, stage, comment):
     mlflow_call_endpoint(
         "transition-requests/reject", "POST", json.dumps(reject_request_body)
     )
+
+# COMMAND ----------
+
+# After receiving payload from webhooks, use MLflow client to retrieve model details and lineage
+def fetch_webhook_data(): 
+  try:
+    registry_event = json.loads(dbutils.widgets.get('event_message'))
+    model_name = registry_event['model_name']
+    model_version = registry_event['version']
+    if 'to_stage' in registry_event and registry_event['to_stage'] != 'Staging':
+      dbutils.notebook.exit()
+  except:
+    #If it's not in a job but interactive demo, we get the last version from the registry
+    model_name = f'dbdemos_mlops_morbidity_{initials}'
+    model_version = client.get_latest_versions(model_name, ['None'])[0].version
+  return(model_name, model_version)
