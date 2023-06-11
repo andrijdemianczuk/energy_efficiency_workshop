@@ -12,6 +12,10 @@
 
 # COMMAND ----------
 
+initials = "ad"
+
+# COMMAND ----------
+
 # DBTITLE 1,Functions to Initialize the AutoML Experiment (Boilerplate)
 from delta.tables import *
 import pandas as pd
@@ -367,9 +371,9 @@ import json
 def display_automl_churn_link(
     table_name,
     force_refresh=False,
-    xp_name="churn_auto_ml",
-    model_name="dbdemos_mlops_churn",
-    target_col="churn",
+    xp_name=f"morbidity_features_{initials}",
+    model_name=f"dbdemos_mlops_morbidity_{initials}",
+    target_col="is_morbid",
 ):
     timeout = 5
     if force_refresh:
@@ -380,11 +384,11 @@ def display_automl_churn_link(
 
 
 def get_automl_churn_run(
-    table_name="dbdemos_mlops_churn_features",
+    table_name="morbidity_features",
     force_refresh=False,
-    xp_name="churn_auto_ml",
-    model_name="dbdemos_mlops_churn",
-    target_col="churn",
+    xp_name=f"morbidity_features_{initials}",
+    model_name=f"dbdemos_mlops_morbidity_{initials}",
+    target_col="is_morbid",
 ):
     timeout = 5
     if force_refresh:
@@ -424,7 +428,7 @@ def find_job(name, offset=0, limit=25):
 
 
 def get_churn_staging_job_id():
-    job = find_job("demos_churn_model_staging_validation")
+    job = find_job(f"demos_morbidity_model_staging_validation_{initials}")
     if job is not None:
         return job["job_id"]
     else:
@@ -449,7 +453,7 @@ def get_churn_staging_job_id():
             raise Exception(f"Cloud '{cloud_name}' isn't supported!")
         job_settings = {
             "email_notifications": {},
-            "name": "demos_churn_model_staging_validation",
+            "name": f"demos_morbidity_model_staging_validation_{initials}",
             "max_concurrent_runs": 1,
             "tasks": [
                 {
