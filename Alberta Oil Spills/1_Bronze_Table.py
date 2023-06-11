@@ -3,7 +3,9 @@
 # MAGIC # Alberta Oil Spills
 # MAGIC
 # MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
-# MAGIC
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
 # MAGIC We will be building a predictor of morbidity rate (injury or death)
 
 # COMMAND ----------
@@ -16,10 +18,12 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Run the setup script
 # MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
 
 # COMMAND ----------
 
+# DBTITLE 1,Retrieve the data from a public website
 import urllib
 
 urllib.request.urlretrieve(
@@ -82,5 +86,16 @@ fixed_df.write.format("delta").option("mergeSchema", "true").mode(
 
 # COMMAND ----------
 
-# DBTITLE 1,Confirm the row count
-fixed_df.count()
+# DBTITLE 0,LAB Challenge
+# MAGIC %md
+# MAGIC ## Lab Challenge
+# MAGIC Can you identify how many rows are in the complete dataset?
+# MAGIC
+# MAGIC How many of the rows contain nulls?
+# MAGIC
+# MAGIC Which columns have a reasonable number nulls and which ones should we omit from our evaluation dataset?
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: Continue working with the fixed_df dataframe using common Spark functions to help.
