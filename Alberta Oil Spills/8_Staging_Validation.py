@@ -1,5 +1,33 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC # Alberta Oil Spills
+# MAGIC
+# MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
+# MAGIC We will be building a predictor of morbidity rate (injury or death)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## The objective
+# MAGIC Now that we've registered our model in staging, we can evaluate it programmatically. This is similar to a DevOps practice where we assess whether all required criteria are met before we sign off and promote the model to production.
+
+# COMMAND ----------
+
 # MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Fetch Model information
+# MAGIC
+# MAGIC Remember how webhooks can send data from one webservice to another?  With MLflow webhooks we send data about a model, and in the following cell we fetch that data to know which model is meant to be tested. 
+# MAGIC
+# MAGIC This is be done getting the `event_message` received by MLFlow webhook: `dbutils.widgets.get('event_message')`
+# MAGIC
+# MAGIC To keep things simple we use a helper function `fetch_webhook_data`, the details of which are found in the _API_Helpers_ notebook.  
 
 # COMMAND ----------
 
@@ -42,6 +70,15 @@ except Exception:
         name=model_name, version=model_version, key="predicts", value=0
     )
     pass
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #### Signature check
+# MAGIC
+# MAGIC When working with ML models you often need to know some basic functional properties of the model at hand, such as “What inputs does it expect?” and “What output does it produce?”.  The model **signature** defines the schema of a model’s inputs and outputs. Model inputs and outputs can be either column-based or tensor-based. 
+# MAGIC
+# MAGIC See [here](https://mlflow.org/docs/latest/models.html#signature-enforcement) for more details.
 
 # COMMAND ----------
 
@@ -161,3 +198,14 @@ else:
         stage="Staging",
         comment="All tests passed!  Moving to staging.",
     )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Lab challenge
+# MAGIC In this example, we verify a few test vectors - do artifacts exist, does the model have a description, a proper signature and does it do what it needs to do. What other testing criteria would be useful on a circumstantial basis?
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: Try altering the logic that either promotes the model or archives it based on data quality checks

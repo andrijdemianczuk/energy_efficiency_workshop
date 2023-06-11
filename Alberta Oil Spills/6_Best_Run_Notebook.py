@@ -1,5 +1,16 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC # Alberta Oil Spills
+# MAGIC
+# MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
+# MAGIC We will be building a predictor of morbidity rate (injury or death)
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC # Logistic Regression Classifier training
 # MAGIC - This is an auto-generated notebook.
 # MAGIC - To reproduce these results, attach this notebook to a cluster with runtime version **13.1.x-cpu-ml-scala2.12**, and rerun it.
@@ -492,3 +503,14 @@ display(Image(filename=eval_roc_curve_path))
 
 eval_pr_curve_path = os.path.join(eval_path, "val_precision_recall_curve_plot.png")
 display(Image(filename=eval_pr_curve_path))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Lab challenge
+# MAGIC What benefits & drawbacks to AutoML offer? How could we improve our hyperparameter tuning and algorithm selection?
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: Analyze the cells in this notebook to identify where and how parameter tuning occured.

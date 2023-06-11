@@ -1,11 +1,5 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC Table: morbidity_features
-# MAGIC Target Column: is_morbid
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ## Global Setup
 # MAGIC
 # MAGIC The Global setup contains several supporting functions developed by the Databricks team to help programmatically manage your ML Flow experiments. Generally speaking there is no need to modify these. In time they will be added to a supporting class library.

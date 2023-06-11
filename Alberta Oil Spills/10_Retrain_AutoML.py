@@ -1,4 +1,21 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC # Alberta Oil Spills
+# MAGIC
+# MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
+# MAGIC We will be building a predictor of morbidity rate (injury or death)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## The objective
+# MAGIC In this notebook, we'll attempt to re-train our model with a new experiment. This would be the type of process we'd want to perform on a regular basis as new data arrives to fine-tune our model.
+
+# COMMAND ----------
+
 # MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
 
 # COMMAND ----------
@@ -47,3 +64,15 @@ client.update_model_version(
 # Transition request to staging
 staging_request = {'name': model_name, 'version': model_details.version, 'stage': 'Staging', 'archive_existing_versions': 'true'}
 mlflow_call_endpoint('transition-requests/create', 'POST', json.dumps(staging_request))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Lab challenge
+# MAGIC
+# MAGIC In this circumstance we are taking an approach where we re-train against our entire corpus of data. For extremely large datasets, it might be wortwhile considering how we can fine-tune with transfer learning. What examples of transfer learning could apply here?
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: There's no right or wrong answer here. Consider which vectors would benefit from transfer learning vs. complete re-training.
