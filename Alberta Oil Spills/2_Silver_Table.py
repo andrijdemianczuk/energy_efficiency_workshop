@@ -3,13 +3,16 @@
 # MAGIC # Alberta Oil Spills
 # MAGIC
 # MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
-# MAGIC
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
 # MAGIC We will be building a predictor of morbidity rate (injury or death)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're going to look to see if we can build a prediction model that will help determine whether or not we are likely to have an injury or fatality due to an incident
+# MAGIC ## The objective
+# MAGIC We're going to look to see if we can build a prediction model that will help determine whether or not we are likely to have an injury or fatality due to an incident. Our dataset contains information on how many individuals were either injured or killed in an incident, which we can use as a categorical dimension for a simple yes/no question: Did an incident occur that required medical intervention (morbidity)?
 
 # COMMAND ----------
 
@@ -17,9 +20,8 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Load the raw data
 from pyspark.sql.functions import col
-
-# COMMAND ----------
 
 df = spark.table(f"hive_metastore.ab_oil_spills_{initials}.raw_oil_spills")
 
@@ -37,6 +39,7 @@ print("Our morbidity rate is: " + str(round(morbidity / df.count() * 100, 4)) + 
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ## Data & feature engineering tasks
 # MAGIC Now that we have an idea of what we want to predict, we can use this as a basis for our engineering and experimentation efforts.
 
 # COMMAND ----------
@@ -88,6 +91,7 @@ display(reduced_df.head(5))
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Deciding on an approach
 # MAGIC There are a couple of options here: we can selectively drop / impute missing values or we can do a blind drop. Depending on the approach and precision requirements one approach might be more viable than the other. In these circumstances, experimentation for the better yield is required.
 
 # COMMAND ----------
@@ -97,6 +101,7 @@ display(reduced_df.dropna())
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Data reduction summary
 # MAGIC For morbid counts we drop from 363 cases down to 70.
 # MAGIC <br/>
 # MAGIC For total row counts, we drop from 61,587 down to 22,175.
@@ -120,4 +125,19 @@ filtered_df.write.format('delta').option("mergeSchema", "true").mode('overwrite'
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Outcomes
 # MAGIC This is the logical point where we'd do a handoff from the Data Engineering team to the Data Science team
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Lab challenge
+# MAGIC
+# MAGIC By using `dropna()` we took a sledgehammer-approach to eliminating any rows with a null value. What is the benefit and drawback of this approach? What implications can this have on our data science and machine learning?
+# MAGIC
+# MAGIC Since we know that machine learning algorithms perform better with richer data sets, try an alternative to simply eliminating rows with null values.
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: Look into options for deciding on the value of lost data and imputing missing values. One option would be to replace certain null values with a literal, but is there a way to better predict what a missing value "would" be?

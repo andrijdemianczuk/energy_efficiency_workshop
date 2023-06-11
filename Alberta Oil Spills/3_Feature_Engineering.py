@@ -3,12 +3,15 @@
 # MAGIC # Alberta Oil Spills
 # MAGIC
 # MAGIC Source data set: https://data.edmonton.ca/api/views/ek45-xtjs/rows.csv?accessType=DOWNLOAD
-# MAGIC
+# MAGIC <br/><br/>
+# MAGIC <img src="https://static.nationalgeographic.co.uk/files/styles/image_3200/public/10-oil-sands-canada.jpg?w=800&h=300>" />
+# MAGIC <br/><br/>
 # MAGIC We will be building a predictor of morbidity rate (injury or death)
 
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ## The objective
 # MAGIC In this notebook we're going to preprocess and encode our data to get it ready for ML experimentation.
 
 # COMMAND ----------
@@ -26,6 +29,17 @@ dbName = f"ab_oil_spills_{initials}"
 cleaned_df = spark.table(f"hive_metastore.ab_oil_spills_{initials}.cleaned_oil_spills")
 display(cleaned_df)
 cleaned_df.printSchema()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Why do we care about the schema?
+# MAGIC The data schema (structure) gives us a sense of what can be important when we are looking to featurize our data in preparation for data science. What would we be possibly looking for in this case?
+
+# COMMAND ----------
+
+# DBTITLE 1,Answer
+#In many cases, identifying out numeric and categorical features is the first step. We also may want to identify anything that would uniquely identify a row that would conflate the model training process. This would typically result in over-fitting of a model.
 
 # COMMAND ----------
 
@@ -106,6 +120,12 @@ def compute_morbidity_features(data):
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### The Databricks Feature Store
+# MAGIC The Databricks feature store is a useful way to managed tables that are used for ML objectives. They are special, enriched Delta tables that are already pre-processed for easy re-use and extensibility among a variety of experiments.
+
+# COMMAND ----------
+
 # DBTITLE 1,Create and register the feature table in feature store
 from databricks.feature_store import FeatureStoreClient
 
@@ -138,3 +158,14 @@ truncated_df.write.format("delta").option("mergeSchema", "true").mode(
 
 # MAGIC %md
 # MAGIC Now that we have our feature table, we can move on to the ML experiments. The Feature Store table will be used going forward as the encoded version of the truncated dataset. 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Lab challenge
+# MAGIC What are some of the challenges of using datasets with too many classification features? When are classification features useful and when are they occlusive? In the above example, we used a `LabelEncoder()` function to enumerate our classifiers, what would be another?
+
+# COMMAND ----------
+
+# DBTITLE 1,Lab Challenge Cell
+#hint: Consider what algorithms are used for which target objectives. Classification features can be both enabling and inhibiting in certain conditions. 
