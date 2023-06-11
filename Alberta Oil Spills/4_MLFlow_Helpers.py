@@ -384,7 +384,7 @@ def display_automl_churn_link(
 
 
 def get_automl_churn_run(
-    table_name="morbidity_features",
+    table_name=f"hive_metastore.ab_oil_spills_{initials}.morbidity_features",
     force_refresh=False,
     xp_name=f"morbidity_features_{initials}",
     model_name=f"dbdemos_mlops_morbidity_{initials}",

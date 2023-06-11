@@ -13,11 +13,14 @@
 
 # COMMAND ----------
 
+# MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
+
+# COMMAND ----------
+
 from pyspark.sql.functions import col
 
 # COMMAND ----------
 
-initials = "ad"
 df = spark.table(f"hive_metastore.ab_oil_spills_{initials}.raw_oil_spills")
 
 # COMMAND ----------

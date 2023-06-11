@@ -13,8 +13,11 @@
 
 # COMMAND ----------
 
+# MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
+
+# COMMAND ----------
+
 # DBTITLE 1,Initialize Variables
-initials = "ad"
 dbName = f"ab_oil_spills_{initials}"
 
 # COMMAND ----------

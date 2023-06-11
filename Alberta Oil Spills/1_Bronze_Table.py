@@ -16,7 +16,7 @@
 
 # COMMAND ----------
 
-initials = "ad"
+# MAGIC %run ./4_MLFlow_Helpers $reset_all_data=false $catalog="hive_metastore"
 
 # COMMAND ----------
 
